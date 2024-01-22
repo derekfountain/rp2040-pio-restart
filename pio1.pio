@@ -1,0 +1,37 @@
+.program pio1
+    pull block    ; TX FIFO into OSR
+    out y, 32     ; Y=32 bits of the value in OSR
+.wrap_target
+    mov x, y      ; counter into X
+    set pins, 1   ; Turn LED on
+lp1:              ; loop, counting down X
+    jmp x-- lp1   ; Delay for (x + 1) cycles, x is a 32 bit number
+    mov x, y      ; pick up original counter
+    set pins, 0   ; Turn LED off
+lp2:              ; loop again, this time with LED off
+    jmp x-- lp2   ; Delay for the same number of cycles again
+.wrap             ; Blink forever!
+
+; example, if clocked at 125,000,000, and the frequency given is 4,
+; the Y register will be populated with 15,625,000 (less 3 actually,
+; but let's ignore that for now). That gives us 15,625,000 ticks with
+; the LED on, then 15,625,000 with it off. That's 31,250,000 ticks,
+; which when done 4 times is 125,000,000. OK, that seems to
+; work out correctly.
+
+
+% c-sdk {
+
+void pio1_program_init(PIO pio, uint sm, uint offset, uint out_pin)
+{
+  pio_gpio_init(pio, out_pin);
+  pio_sm_set_consecutive_pindirs(pio, sm, out_pin, 1, true); gpio_put( out_pin, 0 );
+
+  /* Pick up config */
+  pio_sm_config c = pio1_program_get_default_config(offset);
+
+  sm_config_set_set_pins(&c, out_pin, 1);
+  pio_sm_init(pio, sm, offset, &c);
+  pio_sm_set_enabled(pio, sm, false);
+}
+%}
