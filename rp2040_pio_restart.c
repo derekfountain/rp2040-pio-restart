@@ -36,25 +36,27 @@ SOFTWARE.
 #include "pio_first_test.pio.h"
 #include "pio_second_test.pio.h"
 
+const uint32_t STATUS_GP               = 14;
+
 const uint32_t PIO_FIRST_TEST_TEST_GP  = 15;
 const uint32_t PIO_SECOND_TEST_TEST_GP = 16;
+
+/*  16Hz, period is 62.5ms. Measured at 31.3ms with a high signal, then 31.3ms with a low signal (62.6ms) */
+/* 100Hz, period is 10.0ms. Measured at  5.0ms with a high signal, then  5.0ms with a low signal (10.0ms) */
+/* 200Hz, period is  5.0ms. Measured at  2.5ms with a high signal, then  2.5ms with a low signal ( 5.0ms) */
+const uint32_t FIRST_TEST_FREQ         = 200;
 
 const uint32_t LED_PIN                 = PICO_DEFAULT_LED_PIN;
 
 void main( void )
 {
-  gpio_init( PIO_FIRST_TEST_TEST_GP );
-  gpio_set_dir( PIO_FIRST_TEST_TEST_GP, GPIO_OUT );
-  gpio_put( PIO_FIRST_TEST_TEST_GP, 0 );
-
-  gpio_init( PIO_FIRST_TEST_TEST_GP );
-  gpio_set_dir( PIO_FIRST_TEST_TEST_GP, GPIO_OUT );
-  gpio_put( PIO_FIRST_TEST_TEST_GP, 0 );
-
   gpio_init( LED_PIN );  gpio_set_dir( LED_PIN, GPIO_OUT );
   gpio_put( LED_PIN, 1 );
 
-  PIO  test_pio  = pio0;
+  gpio_init( STATUS_GP );  gpio_set_dir( STATUS_GP, GPIO_OUT );
+  gpio_put( STATUS_GP, 0 );
+
+  PIO      test_pio             = pio0;
 
   int32_t  first_test_sm        = pio_claim_unused_sm(test_pio, true);
   uint32_t first_test_offset    = pio_add_program(test_pio, &pio_first_test_program);
@@ -67,8 +69,8 @@ void main( void )
   // Both PIO programs are loaded, both are disabled
   // Both signal GPIOs are at 0
 
-//  while( true ) 
-//  {
+  while( true ) 
+  {
     // Configure first PIO program
     // Raise signal GPIO
     // Enable it
@@ -77,7 +79,14 @@ void main( void )
     // Lower signal GPIO
     // Deconfigure it, unload it, etc (whatever)
 
-    // Wait 10ms
+    gpio_put( STATUS_GP, 1 );
+    pio_sm_set_enabled(test_pio, first_test_sm, true);
+    test_pio->txf[first_test_sm] = (clock_get_hz(clk_sys) / (2 * FIRST_TEST_FREQ)) - 3;
+    sleep_ms(50);
+    pio_sm_set_enabled(test_pio, first_test_sm, false);
+
+    sleep_ms(20);
+    gpio_put( STATUS_GP, 0 );
 
     // Configure second PIO program
     // Raise signal GPIO
@@ -87,60 +96,12 @@ void main( void )
     // Lower signal GPIO
     // Deconfigure it (whatever)
 
-    // Wait 10ms
-
-    pio_sm_set_enabled(test_pio, first_test_sm, true);
-    test_pio->txf[first_test_sm] = (clock_get_hz(clk_sys) / (2 * 4)) - 3;
-    sleep_ms(10);
-//    pio_sm_set_enabled(test_pio, first_test_sm, false);
-
-    sleep_ms(5);
-
     pio_sm_set_enabled(test_pio, second_test_sm, true);
-    test_pio->txf[second_test_sm] = (clock_get_hz(clk_sys) / (2 * 8)) - 3;
-    sleep_ms(10);
-//    pio_sm_set_enabled(test_pio, second_test_sm, false);
+    sleep_ms(50);
+    pio_sm_set_enabled(test_pio, second_test_sm, false);
 
-
-    while(1){
-    sleep_ms(5);
+    sleep_ms(20);
   }
 }
 
 
-#if 0
-void main( void )
-{
-  gpio_init( PIO1_TEST_GP );  gpio_set_dir( PIO1_TEST_GP, GPIO_OUT );
-  gpio_put( PIO1_TEST_GP, 0 );
-  gpio_init( PIO2_TEST_GP );  gpio_set_dir( PIO2_TEST_GP, GPIO_OUT );
-  gpio_put( PIO2_TEST_GP, 0 );
-
-  gpio_init( LED_PIN );  gpio_set_dir( LED_PIN, GPIO_OUT );
-  gpio_put( LED_PIN, 1 );
-
-  stdio_init_all();
-
-  int  pio1_sm   = pio_claim_unused_sm(pio0, true);
-  uint offset    = pio_add_program(pio0, &pio1_program);
-  pio1_program_init(pio0, pio1_sm, offset, PIO1_TEST_GP);
-
-  pio_sm_set_enabled(pio0, pio1_sm, true);
-
-  int  pio2_sm   = pio_claim_unused_sm(pio1, true);
-       offset    = pio_add_program(pio1, &pio2_program);
-  pio2_program_init(pio1, pio2_sm, offset, PIO2_TEST_GP);
-
-  pio_sm_set_enabled(pio1, pio2_sm, true);
-
-  pio0->txf[pio1_sm] = (clock_get_hz(clk_sys) / (2 * 4)) - 3;
-  pio1->txf[pio2_sm] = (clock_get_hz(clk_sys) / (2 * 8)) - 3;
-
-  while( true ) 
-  {
-    printf("Tick\n\n");
-
-    sleep_ms(1000);
-  }
-}
-#endif
