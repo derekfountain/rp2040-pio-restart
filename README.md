@@ -5,8 +5,8 @@ and unloading PIO programs on the RP2040.
 
 It was having a problem with a project I was working on. It used several
 PIO programs, each of which it loaded, ran, then unloaded, in turn,
-repeating indefinitely to test a piece of hardware. I was failing in
-intermittent and weird ways, so I write this code to use as a basis for
+repeating indefinitely to test a piece of hardware. It was failing in
+intermittent and weird ways, so I wrote this code to use as a basis for
 working out what was happening.
 
 This code has 2 PIO programs, both nicked from the Pico examples. One
@@ -43,4 +43,4 @@ zero, or the actual PIO instruction offset you want to start your program at.)
 
 Well, all this was useful to me, so it might be useful to someone else. :)
 
-Derek Fountain, January 2024
+[Derek Fountain](https://www.derekfountain.org/), January 2024
