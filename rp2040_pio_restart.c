@@ -58,48 +58,42 @@ void main( void )
 
   PIO      test_pio             = pio0;
 
-  int32_t  first_test_sm        = pio_claim_unused_sm(test_pio, true);
-  uint32_t first_test_offset    = pio_add_program(test_pio, &pio_first_test_program);
-  pio_first_test_program_init(test_pio, first_test_sm, first_test_offset, PIO_FIRST_TEST_TEST_GP);
-
-  int32_t  second_test_sm       = pio_claim_unused_sm(test_pio, true);
-  uint32_t second_test_offset   = pio_add_program(test_pio, &pio_second_test_program);
-  pio_second_test_program_init(test_pio, second_test_sm, second_test_offset, PIO_SECOND_TEST_TEST_GP);
 
   // Both PIO programs are loaded, both are disabled
   // Both signal GPIOs are at 0
 
   while( true ) 
   {
-    // Configure first PIO program
-    // Raise signal GPIO
-    // Enable it
-    // Wait 5ms
-    // Disable it
-    // Lower signal GPIO
-    // Deconfigure it, unload it, etc (whatever)
-
     gpio_put( STATUS_GP, 1 );
+
+    int32_t  first_test_sm        = pio_claim_unused_sm(test_pio, true);
+    uint32_t first_test_offset    = pio_add_program(test_pio, &pio_first_test_program);
+    pio_first_test_program_init(test_pio, first_test_sm, first_test_offset, PIO_FIRST_TEST_TEST_GP);
+
     pio_sm_set_enabled(test_pio, first_test_sm, true);
     test_pio->txf[first_test_sm] = (clock_get_hz(clk_sys) / (2 * FIRST_TEST_FREQ)) - 3;
     sleep_ms(50);
     pio_sm_set_enabled(test_pio, first_test_sm, false);
+    pio_sm_clear_fifos(test_pio, first_test_sm);
+    pio_sm_unclaim(test_pio, first_test_sm);
+    pio_remove_program(test_pio, &pio_first_test_program, first_test_offset);
 
-    sleep_ms(20);
     gpio_put( STATUS_GP, 0 );
+    sleep_ms(20);
+    gpio_put( STATUS_GP, 1 );
 
-    // Configure second PIO program
-    // Raise signal GPIO
-    // Enable it
-    // Wait 5ms
-    // Disable it
-    // Lower signal GPIO
-    // Deconfigure it (whatever)
+    int32_t  second_test_sm       = pio_claim_unused_sm(test_pio, true);
+    uint32_t second_test_offset   = pio_add_program(test_pio, &pio_second_test_program);
+    pio_second_test_program_init(test_pio, second_test_sm, second_test_offset, PIO_SECOND_TEST_TEST_GP);
 
     pio_sm_set_enabled(test_pio, second_test_sm, true);
     sleep_ms(50);
     pio_sm_set_enabled(test_pio, second_test_sm, false);
+    pio_sm_clear_fifos(test_pio, second_test_sm);
+    pio_sm_unclaim(test_pio, first_test_sm);
+    pio_remove_program(test_pio, &pio_second_test_program, second_test_offset);
 
+    gpio_put( STATUS_GP, 0 );
     sleep_ms(20);
   }
 }
