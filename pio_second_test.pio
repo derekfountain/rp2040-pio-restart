@@ -1,4 +1,4 @@
-.program pio2
+.program pio_second_test
     pull block
     out y, 32
 .wrap_target
@@ -16,13 +16,13 @@ lp2:
 
 % c-sdk {
 
-void pio2_program_init(PIO pio, uint sm, uint offset, uint out_pin)
+void pio_second_test_program_init(PIO pio, uint sm, uint offset, uint out_pin)
 {
   pio_gpio_init(pio, out_pin);
   pio_sm_set_consecutive_pindirs(pio, sm, out_pin, 1, true); gpio_put( out_pin, 0 );
 
   /* Pick up config */
-  pio_sm_config c = pio2_program_get_default_config(offset);
+  pio_sm_config c = pio_second_test_program_get_default_config(offset);
 
   /* Initialise the state machine, but don't start it yet */
   sm_config_set_set_pins(&c, out_pin, 1);

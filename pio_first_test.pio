@@ -1,4 +1,4 @@
-.program pio1
+.program pio_first_test
     pull block    ; TX FIFO into OSR
     out y, 32     ; Y=32 bits of the value in OSR
 .wrap_target
@@ -22,13 +22,13 @@ lp2:              ; loop again, this time with LED off
 
 % c-sdk {
 
-void pio1_program_init(PIO pio, uint sm, uint offset, uint out_pin)
+void pio_first_test_program_init(PIO pio, uint sm, uint offset, uint out_pin)
 {
   pio_gpio_init(pio, out_pin);
   pio_sm_set_consecutive_pindirs(pio, sm, out_pin, 1, true); gpio_put( out_pin, 0 );
 
   /* Pick up config */
-  pio_sm_config c = pio1_program_get_default_config(offset);
+  pio_sm_config c = pio_first_test_program_get_default_config(offset);
 
   sm_config_set_set_pins(&c, out_pin, 1);
   pio_sm_init(pio, sm, offset, &c);
